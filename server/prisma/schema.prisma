@@ -1,18 +1,279 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client-js"
   output   = "../generated/prisma"
 }
 
 datasource db {
-  provider  = "postgresql"
+  provider = "postgresql"
 }
 
-// ============ ENUMS ============
+model User {
+  id                String     @id @default(uuid())
+  nom               String
+  prenom            String
+  email             String     @unique
+  mot_de_passe_hash String
+  telephone         String?
+  role              Role       @default(client)
+  date_creation     DateTime   @default(now())
+  compte_actif      Boolean    @default(true)
+  addresses         Address[]
+  cart              Cart?
+  orders            Order[]
+  reviews           Review[]
+  vendor            Vendor?
+  wishlist          Wishlist[]
+
+  @@map("users")
+}
+
+model Address {
+  id          String  @id @default(uuid())
+  user_id     String
+  ligne1      String
+  ligne2      String?
+  ville       String
+  code_postal String
+  pays        String
+  is_default  Boolean @default(false)
+  user        User    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  orders      Order[]
+
+  @@map("addresses")
+}
+
+model Vendor {
+  id              String              @id @default(uuid())
+  user_id         String              @unique
+  nom_boutique    String
+  slug            String              @unique
+  description     String?
+  logo_url        String?
+  telephone_pro   String?
+  moyen_paiement  String?
+  numero_paiement String?
+  taux_commission Decimal             @default(10.00) @db.Decimal(5, 2)
+  statut          VendorStatus        @default(en_attente)
+  date_creation   DateTime            @default(now())
+  date_validation DateTime?
+  products        Product[]
+  vendorOrders    VendorOrder[]
+  transactions    VendorTransaction[]
+  user            User                @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("vendors")
+}
+
+model VendorApplication {
+  id              String       @id @default(uuid())
+  nom             String
+  prenom          String
+  email           String
+  telephone       String?
+  nom_boutique    String
+  description     String?
+  moyen_paiement  String?
+  numero_paiement String?
+  statut          VendorStatus @default(en_attente)
+  date_creation   DateTime     @default(now())
+  logo_url        String?
+
+  @@map("vendor_applications")
+}
+
+model VendorTransaction {
+  id              String            @id @default(uuid())
+  vendor_id       String
+  vendor_order_id String?
+  type            TransactionType
+  statut          TransactionStatus @default(en_attente)
+  montant         Decimal           @db.Decimal(10, 2)
+  description     String?
+  date_creation   DateTime          @default(now())
+  date_traitement DateTime?
+  vendor          Vendor            @relation(fields: [vendor_id], references: [id], onDelete: Cascade)
+  vendorOrder     VendorOrder?      @relation(fields: [vendor_order_id], references: [id])
+
+  @@map("vendor_transactions")
+}
+
+model Category {
+  id        String     @id @default(uuid())
+  nom       String
+  parent_id String?
+  parent    Category?  @relation("CategoryToSubcategory", fields: [parent_id], references: [id])
+  children  Category[] @relation("CategoryToSubcategory")
+  products  Product[]
+  brands    Brand[]    @relation("BrandCategories")
+
+  @@map("categories")
+}
+
+model Brand {
+  id         String     @id @default(uuid())
+  nom        String
+  logo_url   String?
+  products   Product[]
+  categories Category[] @relation("BrandCategories")
+
+  @@map("brands")
+}
+
+model Product {
+  id                 String           @id @default(uuid())
+  vendor_id          String
+  nom                String
+  description        String?
+  category_id        String
+  brand_id           String
+  prix               Decimal          @db.Decimal(10, 2)
+  prix_promo         Decimal?         @db.Decimal(10, 2)
+  note_moyenne       Decimal          @default(0) @db.Decimal(3, 2)
+  actif              Boolean          @default(true)
+  date_creation      DateTime         @default(now())
+  etat               ProductCondition @default(neuf)
+  livraison_express  Boolean          @default(false)
+  livraison_gratuite Boolean          @default(false)
+  images             ProductImage[]
+  variants           ProductVariant[]
+  brand              Brand            @relation(fields: [brand_id], references: [id])
+  category           Category         @relation(fields: [category_id], references: [id])
+  vendor             Vendor           @relation(fields: [vendor_id], references: [id], onDelete: Cascade)
+  reviews            Review[]
+  wishlist           Wishlist[]
+
+  @@map("products")
+}
+
+model ProductVariant {
+  id         String      @id @default(uuid())
+  product_id String
+  taille     String
+  couleur    String
+  stock      Int         @default(0)
+  sku        String      @unique
+  cartItems  CartItem[]
+  orderItems OrderItem[]
+  product    Product     @relation(fields: [product_id], references: [id], onDelete: Cascade)
+
+  @@map("product_variants")
+}
+
+model ProductImage {
+  id         String  @id @default(uuid())
+  product_id String
+  url        String
+  ordre      Int     @default(0)
+  product    Product @relation(fields: [product_id], references: [id], onDelete: Cascade)
+
+  @@map("product_images")
+}
+
+model Cart {
+  id      String     @id @default(uuid())
+  user_id String     @unique
+  items   CartItem[]
+  user    User       @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("carts")
+}
+
+model CartItem {
+  id         String         @id @default(uuid())
+  cart_id    String
+  variant_id String
+  quantite   Int            @default(1)
+  cart       Cart           @relation(fields: [cart_id], references: [id], onDelete: Cascade)
+  variant    ProductVariant @relation(fields: [variant_id], references: [id])
+
+  @@map("cart_items")
+}
+
+model Wishlist {
+  id         String   @id @default(uuid())
+  user_id    String
+  product_id String
+  date_ajout DateTime @default(now())
+  product    Product  @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, product_id])
+  @@map("wishlist")
+}
+
+model Order {
+  id             String        @id @default(uuid())
+  user_id        String
+  address_id     String
+  coupon_id      String?
+  mode_paiement  String
+  mode_livraison String
+  montant_total  Decimal       @db.Decimal(10, 2)
+  date_commande  DateTime      @default(now())
+  address        Address       @relation(fields: [address_id], references: [id])
+  coupon         Coupon?       @relation(fields: [coupon_id], references: [id])
+  user           User          @relation(fields: [user_id], references: [id])
+  vendorOrders   VendorOrder[]
+
+  @@map("orders")
+}
+
+model VendorOrder {
+  id                 String              @id @default(uuid())
+  order_id           String
+  vendor_id          String
+  statut             OrderStatus         @default(en_attente)
+  montant_total      Decimal             @db.Decimal(10, 2)
+  montant_commission Decimal             @db.Decimal(10, 2)
+  montant_net        Decimal             @db.Decimal(10, 2)
+  date_maj           DateTime            @updatedAt
+  items              OrderItem[]
+  order              Order               @relation(fields: [order_id], references: [id], onDelete: Cascade)
+  vendor             Vendor              @relation(fields: [vendor_id], references: [id])
+  transactions       VendorTransaction[]
+
+  @@map("vendor_orders")
+}
+
+model OrderItem {
+  id              String         @id @default(uuid())
+  vendor_order_id String
+  variant_id      String
+  quantite        Int
+  prix_unitaire   Decimal        @db.Decimal(10, 2)
+  variant         ProductVariant @relation(fields: [variant_id], references: [id])
+  vendorOrder     VendorOrder    @relation(fields: [vendor_order_id], references: [id], onDelete: Cascade)
+
+  @@map("order_items")
+}
+
+model Review {
+  id          String       @id @default(uuid())
+  product_id  String
+  user_id     String
+  note        Int
+  commentaire String?
+  statut      ReviewStatus @default(en_attente)
+  date        DateTime     @default(now())
+  product     Product      @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  user        User         @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("reviews")
+}
+
+model Coupon {
+  id         String     @id @default(uuid())
+  code       String     @unique
+  type       CouponType
+  valeur     Decimal    @db.Decimal(10, 2)
+  date_debut DateTime
+  date_fin   DateTime
+  usage_max  Int
+  actif      Boolean    @default(true)
+  orders     Order[]
+
+  @@map("coupons")
+}
 
 enum Role {
   client
@@ -59,319 +320,8 @@ enum TransactionStatus {
   echoue
 }
 
-// NOUVEAU — état du produit (filtre "État" de la Boutique)
 enum ProductCondition {
   neuf
   reconditionne
   occasion
-}
-
-// ============ USERS & ADDRESSES ============
-
-model User {
-  id                String   @id @default(uuid())
-  nom               String
-  prenom            String
-  email             String   @unique
-  mot_de_passe_hash String
-  telephone         String?
-  role              Role     @default(client)
-    compte_actif      Boolean  @default(true)
-  date_creation     DateTime @default(now())
-
-  addresses Address[]
-  cart      Cart?
-  orders    Order[]
-  reviews   Review[]
-  wishlist  Wishlist[]
-  vendor    Vendor?
-
-  @@map("users")
-}
-
-model Address {
-  id          String  @id @default(uuid())
-  user_id     String
-  ligne1      String
-  ligne2      String?
-  ville       String
-  code_postal String
-  pays        String
-  is_default  Boolean @default(false)
-
-  user   User    @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  orders Order[]
-
-  @@map("addresses")
-}
-
-// ============ VENDORS ============
-
-model Vendor {
-  id               String       @id @default(uuid())
-  user_id          String       @unique
-  nom_boutique     String
-  slug             String       @unique
-  description      String?
-  logo_url         String?
-  telephone_pro    String?
-  moyen_paiement   String?
-  numero_paiement  String?
-  taux_commission  Decimal      @default(10.00) @db.Decimal(5, 2)
-  statut           VendorStatus @default(en_attente)
-  date_creation    DateTime     @default(now())
-  date_validation  DateTime?
-
-  user          User            @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  products      Product[]
-  vendorOrders  VendorOrder[]
-  transactions  VendorTransaction[]
-
-  @@map("vendors")
-}
-
-model VendorApplication {
-  id          String    @id @default(uuid())
-  nom         String
-  prenom      String
-  email       String
-  telephone   String?
-  nom_boutique String
-  description String?
-  logo_url    String?   
-  moyen_paiement String?
-  numero_paiement String?
-  statut     VendorStatus @default(en_attente)
-  date_creation DateTime @default(now())
-
-  @@map("vendor_applications")
-}
-
-model VendorTransaction {
-  id              String             @id @default(uuid())
-  vendor_id       String
-  vendor_order_id String?
-  type            TransactionType
-  statut          TransactionStatus  @default(en_attente)
-  montant         Decimal            @db.Decimal(10, 2)
-  description     String?
-  date_creation   DateTime           @default(now())
-  date_traitement DateTime?
-
-  vendor      Vendor       @relation(fields: [vendor_id], references: [id], onDelete: Cascade)
-  vendorOrder VendorOrder? @relation(fields: [vendor_order_id], references: [id])
-
-  @@map("vendor_transactions")
-}
-
-// ============ CATEGORIES & BRANDS ============
-
-model Category {
-  id        String @id @default(uuid())
-  nom       String
-  parent_id String?
-
-  parent   Category?  @relation("CategoryToSubcategory", fields: [parent_id], references: [id])
-  children Category[] @relation("CategoryToSubcategory")
-  products Product[]
-
-  // NOUVEAU — les marques disponibles pour cet univers (catégorie racine).
-  // On lie généralement une marque à la catégorie RACINE (ex: "Électronique"),
-  // pas à chaque sous-catégorie ("Écrans", "Casques"...).
-  brands   Brand[]    @relation("BrandCategories")
-
-  @@map("categories")
-}
-
-model Brand {
-  id       String  @id @default(uuid())
-  nom      String
-  logo_url String?
-
-  products   Product[]
-  // NOUVEAU — univers (catégories racines) où cette marque est proposée
-  categories Category[] @relation("BrandCategories")
-
-  @@map("brands")
-}
-
-// ============ PRODUCTS ============
-
-model Product {
-  id            String           @id @default(uuid())
-  vendor_id     String
-  nom           String
-  description   String?
-  category_id   String
-  brand_id      String
-  prix          Decimal          @db.Decimal(10, 2)
-  prix_promo    Decimal?         @db.Decimal(10, 2)
-  note_moyenne  Decimal          @default(0) @db.Decimal(3, 2)
-  actif         Boolean          @default(true)
-  date_creation DateTime         @default(now())
-
-  // NOUVEAU — champs pour parité avec les filtres de la Boutique
-  etat               ProductCondition @default(neuf)
-  livraison_gratuite Boolean          @default(false)
-  livraison_express  Boolean          @default(false)
-
-  vendor   Vendor           @relation(fields: [vendor_id], references: [id], onDelete: Cascade)
-  category Category         @relation(fields: [category_id], references: [id])
-  brand    Brand            @relation(fields: [brand_id], references: [id])
-  variants ProductVariant[]
-  images   ProductImage[]
-  reviews  Review[]
-  wishlist Wishlist[]
-
-  @@map("products")
-}
-
-model ProductVariant {
-  id         String @id @default(uuid())
-  product_id String
-  taille     String
-  couleur    String
-  stock      Int    @default(0)
-  sku        String @unique
-
-  product     Product     @relation(fields: [product_id], references: [id], onDelete: Cascade)
-  cartItems   CartItem[]
-  orderItems  OrderItem[]
-
-  @@map("product_variants")
-}
-
-model ProductImage {
-  id         String @id @default(uuid())
-  product_id String
-  url        String
-  ordre      Int    @default(0)
-
-  product Product @relation(fields: [product_id], references: [id], onDelete: Cascade)
-
-  @@map("product_images")
-}
-
-// ============ CART ============
-
-model Cart {
-  id      String @id @default(uuid())
-  user_id String @unique
-
-  user  User       @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  items CartItem[]
-
-  @@map("carts")
-}
-
-model CartItem {
-  id         String @id @default(uuid())
-  cart_id    String
-  variant_id String
-  quantite   Int    @default(1)
-
-  cart    Cart           @relation(fields: [cart_id], references: [id], onDelete: Cascade)
-  variant ProductVariant @relation(fields: [variant_id], references: [id])
-
-  @@map("cart_items")
-}
-
-// ============ WISHLIST ============
-
-model Wishlist {
-  id         String   @id @default(uuid())
-  user_id    String
-  product_id String
-  date_ajout DateTime @default(now())
-
-  user    User    @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  product Product @relation(fields: [product_id], references: [id], onDelete: Cascade)
-
-  @@unique([user_id, product_id])
-  @@map("wishlist")
-}
-
-// ============ ORDERS ============
-
-model Order {
-  id              String      @id @default(uuid())
-  user_id         String
-  address_id      String
-  coupon_id       String?
-  mode_paiement   String
-  mode_livraison  String
-  montant_total   Decimal     @db.Decimal(10, 2)
-  date_commande   DateTime    @default(now())
-
-  user         User          @relation(fields: [user_id], references: [id])
-  address      Address       @relation(fields: [address_id], references: [id])
-  coupon       Coupon?       @relation(fields: [coupon_id], references: [id])
-  vendorOrders VendorOrder[]
-
-  @@map("orders")
-}
-
-model VendorOrder {
-  id                 String      @id @default(uuid())
-  order_id           String
-  vendor_id          String
-  statut             OrderStatus @default(en_attente)
-  montant_total      Decimal     @db.Decimal(10, 2)
-  montant_commission Decimal     @db.Decimal(10, 2)
-  montant_net        Decimal     @db.Decimal(10, 2)
-  date_maj           DateTime    @updatedAt
-
-  order        Order               @relation(fields: [order_id], references: [id], onDelete: Cascade)
-  vendor       Vendor              @relation(fields: [vendor_id], references: [id])
-  items        OrderItem[]
-  transactions VendorTransaction[]
-
-  @@map("vendor_orders")
-}
-
-model OrderItem {
-  id              String  @id @default(uuid())
-  vendor_order_id String
-  variant_id      String
-  quantite        Int
-  prix_unitaire   Decimal @db.Decimal(10, 2)
-
-  vendorOrder VendorOrder    @relation(fields: [vendor_order_id], references: [id], onDelete: Cascade)
-  variant     ProductVariant @relation(fields: [variant_id], references: [id])
-
-  @@map("order_items")
-}
-
-// ============ REVIEWS ============
-
-model Review {
-  id          String       @id @default(uuid())
-  product_id  String
-  user_id     String
-  note        Int
-  commentaire String?
-  statut      ReviewStatus @default(en_attente)
-  date        DateTime     @default(now())
-
-  product Product @relation(fields: [product_id], references: [id], onDelete: Cascade)
-  user    User    @relation(fields: [user_id], references: [id], onDelete: Cascade)
-
-  @@map("reviews")
-}
-
-// ============ COUPONS ============
-
-model Coupon {
-  id          String     @id @default(uuid())
-  code        String     @unique
-  type        CouponType
-  valeur      Decimal    @db.Decimal(10, 2)
-  date_debut  DateTime
-  date_fin    DateTime
-  usage_max   Int
-  actif       Boolean    @default(true)
-
-  orders Order[]
-
-  @@map("coupons")
 }

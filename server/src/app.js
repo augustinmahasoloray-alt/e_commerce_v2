@@ -26,6 +26,10 @@ import cartRoutes from "./routes/cart.routes.js";
 
 const app = express();
 
+// Nécessaire derrière le reverse-proxy de Railway pour que req.protocol
+// reflète correctement "https" (sinon Express croit être en http).
+app.set("trust proxy", 1);
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -36,20 +40,27 @@ const allowedOrigins = [
 ].filter(Boolean);
 
 app.use(
-    cors({
-        origin: (origin, callback) => {
-            // Autoriser les requêtes sans Origin (curl, Postman, etc.)
-            if (!origin) {
-                return callback(null, true);
-            }
+    cors((req, callback) => {
+        const requestOrigin = req.header("Origin");
+        // Le serveur lui-même (utilisé par le dashboard admin statique,
+        // servi depuis ce même domaine) est toujours autorisé.
+        const serverOrigin = `${req.protocol}://${req.get("host")}`;
 
-            if (allowedOrigins.includes(origin)) {
-                return callback(null, true);
-            }
+        let isAllowed = false;
 
-            return callback(new Error("Origine non autorisée par CORS"));
-        },
-        credentials: true,
+        if (!requestOrigin) {
+            // Requêtes sans Origin (curl, Postman, etc.)
+            isAllowed = true;
+        } else if (allowedOrigins.includes(requestOrigin)) {
+            isAllowed = true;
+        } else if (requestOrigin === serverOrigin) {
+            isAllowed = true;
+        }
+
+        callback(null, {
+            origin: isAllowed,
+            credentials: true,
+        });
     })
 );
 app.use(express.json());

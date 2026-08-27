@@ -14,6 +14,8 @@ import { useCart } from "../contexts/CartContext.jsx";
  * pt-20 NON inclus ici : App.jsx l'ajoute déjà pour toute route ≠ "/".
  */
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 const CONDITIONS = [
   { value: "neuf", label: "Neuf" },
   { value: "reconditionne", label: "Reconditionné" },
@@ -114,8 +116,8 @@ export default function Boutique() {
       setTaxonomyError(null);
       try {
         const [catRes, brandRes] = await Promise.all([
-          fetch("/api/categories"),
-          fetch("/api/brands"),
+          fetch(`${API_URL}/api/categories`),
+          fetch(`${API_URL}/api/brands`),
         ]);
         const catJson = await catRes.json();
         const brandJson = await brandRes.json();
@@ -206,7 +208,7 @@ export default function Boutique() {
     if (priceMax < PRICE_MAX_DEFAULT) params.set("prix_max", String(priceMax));
 
     try {
-      const response = await fetch(`/api/products?${params.toString()}`);
+      const response = await fetch(`${API_URL}/api/products?${params.toString()}`);
       const result = await response.json();
       if (!response.ok) throw new Error(result.message || "Erreur lors du chargement des produits.");
       setProducts(result.products || []);

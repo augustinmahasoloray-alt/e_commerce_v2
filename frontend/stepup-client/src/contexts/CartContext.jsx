@@ -1,7 +1,9 @@
 import { createContext, useContext, useState, useEffect } from "react";
-import { useAuth } from "./AuthContext"; // Assure-toi que ce fichier existe aussi
+import { useAuth } from "./AuthContext";
 
 const CartContext = createContext();
+
+const API_URL = import.meta.env.VITE_API_URL;
 
 export const CartProvider = ({ children }) => {
   const [cart, setCart] = useState(null);
@@ -11,13 +13,16 @@ export const CartProvider = ({ children }) => {
   // Récupérer le panier depuis le backend
   const fetchCart = async () => {
     if (!token) return;
+
     setLoading(true);
+
     try {
-      const response = await fetch("http://localhost:3000/api/cart", {
+      const response = await fetch(`${API_URL}/api/cart`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
+
       const data = await response.json();
       setCart(data);
     } catch (error) {
@@ -30,9 +35,11 @@ export const CartProvider = ({ children }) => {
   // Ajouter un produit au panier
   const addToCart = async (variantId, quantite = 1) => {
     if (!token) return;
+
     setLoading(true);
+
     try {
-      const response = await fetch("http://localhost:3000/api/cart", {
+      const response = await fetch(`${API_URL}/api/cart`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -40,6 +47,7 @@ export const CartProvider = ({ children }) => {
         },
         body: JSON.stringify({ variantId, quantite }),
       });
+
       const data = await response.json();
       setCart(data);
     } catch (error) {
@@ -52,15 +60,18 @@ export const CartProvider = ({ children }) => {
   // Supprimer un item du panier
   const removeFromCart = async (itemId) => {
     if (!token) return;
+
     setLoading(true);
+
     try {
-      await fetch(`http://localhost:3000/api/cart/items/${itemId}`, {
+      await fetch(`${API_URL}/api/cart/items/${itemId}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      await fetchCart(); // Rafraîchir le panier
+
+      await fetchCart();
     } catch (error) {
       console.error("Erreur removeFromCart:", error);
     } finally {
@@ -71,14 +82,17 @@ export const CartProvider = ({ children }) => {
   // Vider le panier
   const clearCart = async () => {
     if (!token) return;
+
     setLoading(true);
+
     try {
-      await fetch("http://localhost:3000/api/cart", {
+      await fetch(`${API_URL}/api/cart`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
+
       setCart(null);
     } catch (error) {
       console.error("Erreur clearCart:", error);
@@ -96,11 +110,16 @@ export const CartProvider = ({ children }) => {
 
   return (
     <CartContext.Provider
-      value={{ cart, loading, addToCart, removeFromCart, clearCart, fetchCart }}
+      value={{
+        cart,
+        loading,
+        addToCart,
+        removeFromCart,
+        clearCart,
+        fetchCart,
+      }}
     >
       {children}
     </CartContext.Provider>
   );
 };
-
-export const useCart = () => useContext(CartContext);

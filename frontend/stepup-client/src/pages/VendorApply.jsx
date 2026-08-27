@@ -2,7 +2,7 @@
 import { useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Mail, ArrowRight, User, Store, Phone, CreditCard, FileText, Camera } from "lucide-react";
-
+const API_URL = import.meta.env.VITE_API_URL;
 export default function VendorApply() {
     const [formData, setFormData] = useState({
         nom: "",
@@ -79,7 +79,7 @@ export default function VendorApply() {
 
             const token = localStorage.getItem("token");
 
-            const response = await fetch("http://localhost:3000/api/vendor-application/apply", {
+const response = await fetch(`${API_URL}/api/vendor-application/apply`, {
                 method: "POST",
                 headers: {
                     Authorization: `Bearer ${token}`,

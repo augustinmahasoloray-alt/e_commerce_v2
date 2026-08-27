@@ -119,32 +119,7 @@ export const addToCart = async (req, res) => {
     }
 };
 
-// 📌 Supprimer un item du panier
-export const removeFromCart = async (req, res) => {
-    try {
-        const { itemId } = req.params;
-        const userId = req.user.id;
-
-        // Vérifier que l'item appartient au panier de l'utilisateur
-        const item = await prisma.cartItem.findUnique({
-            where: { id: itemId },
-            include: { cart: true },
-        });
-
-        if (!item || item.cart.user_id !== userId) {
-            return res.status(404).json({ error: "Item non trouvé" });
-        }
-
-        await prisma.cartItem.delete({
-            where: { id: item.id },
-        });
-
-        res.json({ success: true });
-    } catch (error) {
-        console.error("Erreur removeFromCart:", error);
-        res.status(500).json({ error: "Erreur serveur" });
-    }
-};
+ 
 
 // 📌 Vider le panier
 export const clearCart = async (req, res) => {

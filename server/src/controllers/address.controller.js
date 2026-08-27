@@ -12,7 +12,7 @@ export const getMyAddresses = async (req, res, next) => {
 export const getMyDefaultAddress = async (req, res, next) => {
   try {
     const address = await addressService.getDefaultAddress(req.user.id);
-    res.status(200).json({ succes: true, address }); // address peut être null
+    res.status(200).json({ succes: true, address });
   } catch (error) {
     next(error);
   }

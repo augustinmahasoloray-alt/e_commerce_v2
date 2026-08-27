@@ -5,14 +5,7 @@ import {
   ChevronDown, X, Zap, Flame, AlertTriangle,
 } from "lucide-react";
 import { useCart } from "../contexts/CartContext.jsx";
-
-/**
- * StepUp — Boutique (catalogue unique, mono-vendeur)
- * Univers, sous-catégories, marques et produits sont chargés dynamiquement
- * depuis l'API (/api/categories, /api/brands, /api/products), pour que tout
- * ce qui est créé depuis le dashboard admin apparaisse ici automatiquement.
- * pt-20 NON inclus ici : App.jsx l'ajoute déjà pour toute route ≠ "/".
- */
+import AddressModal from "../components/product/AddressModal.jsx";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -105,8 +98,16 @@ export default function Boutique() {
   const [taxonomyLoading, setTaxonomyLoading] = useState(true);
   const [taxonomyError, setTaxonomyError] = useState(null);
 
-  // 📌 Ajout du contexte du panier
-  const { addToCart, loading: cartLoading } = useCart();
+  // 📌 Contexte panier / commande directe
+  const { createDirectOrder, orderLoading, orderError, needsAddress } = useCart();
+
+  // 📌 État local pour la commande directe (1 clic = 1 commande)
+  const [showAddressModal, setShowAddressModal] = useState(false);
+  const [orderSuccessMsg, setOrderSuccessMsg] = useState(null);
+
+  useEffect(() => {
+    if (needsAddress) setShowAddressModal(true);
+  }, [needsAddress]);
 
   useEffect(() => {
     let cancelled = false;
@@ -152,7 +153,7 @@ export default function Boutique() {
     if (!taxonomyLoading && universes.length > 0 && !searchParams.get("univers")) {
       setSearchParams({ univers: universes[0].id });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+ 
   }, [taxonomyLoading, universes]);
 
   const universeBrands = useMemo(() => {
@@ -176,7 +177,7 @@ export default function Boutique() {
   const [view, setView] = useState("grid");
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [selectedBrands, setSelectedBrands] = useState([]); // ids
-  const [selectedConditions, setSelectedConditions] = useState([]); // valeurs enum
+  const [selectedConditions, setSelectedConditions] = useState([]);
   const [freeDeliveryOnly, setFreeDeliveryOnly] = useState(false);
   const [priceMax, setPriceMax] = useState(PRICE_MAX_DEFAULT);
 
@@ -223,11 +224,18 @@ export default function Boutique() {
     fetchProducts();
   }, [fetchProducts]);
 
-  // 📌 Fonction pour gérer l'ajout au panier
-  const handleAddToCart = (product) => {
+  // 📌 Un clic sur "Ajouter au panier" crée directement une commande
+  // pour ce produit (1 unité, première variante disponible), sans
+  // passer par un panier persistant.
+  const handleAddToCart = async (product) => {
     const firstVariant = product.variants?.[0]?.id;
-    if (firstVariant) {
-      addToCart(firstVariant, 1);
+    if (!firstVariant) return;
+
+    setOrderSuccessMsg(null);
+    const order = await createDirectOrder(firstVariant, 1);
+
+    if (order) {
+      setOrderSuccessMsg(`Commande #${order.id.slice(0, 8)} créée !`);
     }
   };
 
@@ -463,14 +471,14 @@ export default function Boutique() {
                       </p>
 
                       <div className="flex items-center gap-2 mt-3">
-                        {/* 📌 Bouton "Ajouter au panier" corrigé */}
+                        {/* 📌 Un clic = une commande directe */}
                         <Pill
                           variant="primary"
                           className="!px-4 !py-2 text-xs flex-1"
-                          disabled={stockLabel === "Rupture" || cartLoading}
+                          disabled={stockLabel === "Rupture" || orderLoading}
                           onClick={() => handleAddToCart(p)}
                         >
-                          {cartLoading ? "Ajout..." : stockLabel === "Rupture" ? "Précommander" : "Ajouter au panier"}
+                          {orderLoading ? "Commande..." : stockLabel === "Rupture" ? "Précommander" : "Ajouter au panier"}
                         </Pill>
                         <button aria-label="Comparer" className="w-9 h-9 rounded-full border border-muted/30 flex items-center justify-center hover:border-accent hover:text-accent transition-colors shrink-0">
                           <Scale size={13} />
@@ -505,6 +513,27 @@ export default function Boutique() {
           </div>
         </div>
       </div>
+
+      {/* 📌 Notifications commande directe */}
+      {orderError && (
+        <div className="fixed bottom-6 right-6 bg-red-500 text-white text-sm px-4 py-3 rounded-lg shadow-lg z-[300]">
+          {orderError}
+        </div>
+      )}
+      {orderSuccessMsg && (
+        <div className="fixed bottom-6 right-6 bg-accent text-backgroundColor text-sm px-4 py-3 rounded-lg shadow-lg z-[300]">
+          {orderSuccessMsg}
+        </div>
+      )}
+      {showAddressModal && (
+        <AddressModal
+          onClose={() => setShowAddressModal(false)}
+          onSuccess={(order) => {
+            setShowAddressModal(false);
+            setOrderSuccessMsg(`Commande #${order.id.slice(0, 8)} créée !`);
+          }}
+        />
+      )}
     </main>
   );
 }

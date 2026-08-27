@@ -22,7 +22,7 @@ import errorMiddleware from "./middlewares/error.middleware.js";
 import adminUserRoutes from "./routes/adminUser.routes.js";
 import adminStatsRoutes from "./routes/adminStats.routes.js";
 import cartRoutes from "./routes/cart.routes.js";
-
+import addressRoutes from "./routes/address.routes.js";
 
 const app = express();
 
@@ -85,6 +85,7 @@ app.use("/api/admin/orders", adminOrderRoutes);
 app.use("/api/admin/users", adminUserRoutes);
 app.use("/api/admin/stats", adminStatsRoutes);
 app.use("/api/cart", cartRoutes);
+app.use("/api/addresses", addressRoutes);
 
 
 // Middleware de gestion des erreurs

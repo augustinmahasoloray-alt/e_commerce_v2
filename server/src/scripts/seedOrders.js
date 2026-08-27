@@ -22,7 +22,7 @@ async function getOrCreateTestClients(count = 4) {
         nom: `Client${n}`,
         prenom: "Test",
         email: `client.test${n}@stepup.test`,
-        mot_de_passe_hash: "seed_placeholder_hash", // pas un vrai hash bcrypt, ces comptes ne sont pas prévus pour se connecter
+        mot_de_passe_hash: "seed_placeholder_hash", 
         telephone: `03212345${String(n).padStart(2, "0")}`,
         role: "client",
       },
@@ -72,7 +72,7 @@ async function main() {
     const address = await prisma.address.findFirst({ where: { user_id: client.id } });
 
     const statut = STATUTS[i % STATUTS.length];
-    const daysAgo = Math.floor(Math.random() * 45); // réparti sur 45 jours (pour tester jour/semaine/mois)
+    const daysAgo = Math.floor(Math.random() * 45); 
     const date_commande = new Date(now - daysAgo * 24 * 60 * 60 * 1000);
 
     const nbItems = 1 + Math.floor(Math.random() * 3);

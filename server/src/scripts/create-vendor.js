@@ -1,12 +1,3 @@
-// Script one-shot : crée le profil Vendor unique (mono-vendeur)
-// et le lie au compte admin déjà créé (identifié par son email).
-//
-// Usage :
-//   node src/scripts/create-vendor.js "ton-email-admin@example.com"
-//
-// À lancer une seule fois, avec la bonne DATABASE_URL en variable
-// d'environnement (locale ou celle de Railway via DATABASE_PUBLIC_URL).
-
 import prisma from "../config/db.js";
 
 async function main() {

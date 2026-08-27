@@ -1,0 +1,67 @@
+# StepUp — Système de design & branding
+
+## Positionnement
+
+StepUp est une marketplace premium de chaussures. L'esthétique doit évoquer une boutique haut de gamme plutôt qu'un site e-commerce générique : beaucoup d'espace négatif, peu d'éléments à l'écran à la fois, hiérarchie typographique forte, animations discrètes et fluides plutôt que voyantes. La densité d'information reste basse — on privilégie la respiration visuelle à la quantité de contenu visible.
+
+Vocabulaire visuel : sobre, contrasté, confiant. On évite le bruit (bordures multiples, ombres lourdes, couleurs vives en dehors de l'accent).
+
+## Typographie
+
+Trois niveaux, chacun avec un rôle précis — ne pas les interchanger :
+
+| Niveau | Police | Usage |
+|---|---|---|
+| **Display** | Qurova | Grands titres hero, accroches produit, moments de marque (page d'accueil, bannières) |
+| **Title** | Metal | Titres de section, noms de produits, headers de carte, logo |
+| **Body** | Alber Sans | Texte courant, descriptions, labels de formulaire, navigation |
+
+**Règle d'usage** : le Display ne doit apparaître qu'une à deux fois par écran maximum — c'est un outil d'impact, pas un style par défaut. Le Title structure la page. Le Body porte toute la lecture fonctionnelle.
+
+Échelle suggérée (à ajuster selon rendu réel des fontes) :
+- Display : 48–96px, tracking légèrement resserré
+- Title : 20–36px
+- Body : 14–16px, line-height généreux (1.6+) pour l'aspect "premium aéré"
+
+## Couleurs
+
+Le produit doit fonctionner nativement en light **et** dark mode — l'accent reste identique dans les deux thèmes pour ancrer l'identité de marque indépendamment du mode.
+
+### Light mode
+| Rôle | Valeur | Usage |
+|---|---|---|
+| Background | `#FAFAF9` | Fond de page |
+| Surface | `#FFFFFF` | Cards, modales, header |
+| Text | `#111827` | Texte principal |
+| Accent | `#4FD1C5` | CTA, liens actifs, éléments interactifs, badges |
+| Muted | `#64748B` | Texte secondaire, placeholders, métadonnées |
+
+### Dark mode
+| Rôle | Valeur | Usage |
+|---|---|---|
+| Background | `#0B0B0B` | Fond de page |
+| Surface | `#161616` | Cards, modales, header |
+| Text | `#F5F5F5` | Texte principal |
+| Accent | `#4FD1C5` | Identique au light mode |
+| Muted | `#A0AEC0` | Texte secondaire |
+
+**Règle d'usage de l'accent** : à utiliser avec parcimonie — CTA principal, état actif/sélectionné, prix en promo, notifications. Ne jamais l'utiliser comme couleur de fond large (perd son impact s'il est partout).
+
+## Composants — principes transversaux
+
+- **Cards produit** : fond `Surface`, pas de bordure visible ou bordure quasi invisible (`Muted` à faible opacité), ombre très subtile plutôt que trait dur. Image produit dominante, texte minimal (nom, prix, éventuellement boutique vendeur).
+- **Boutons** : CTA principal = fond `Accent`, texte sur accent en `Background` (contraste fort). CTA secondaire = contour `Muted`, fond transparent.
+- **États interactifs** : transitions douces (200–300ms), pas d'effets abrupts. Le hover doit suggérer, pas crier.
+- **Espacement** : préférer trop d'espace à pas assez. Sections séparées par de larges marges verticales plutôt que des séparateurs visuels.
+- **Iconographie** : lucide-react (déjà en place dans la navbar), traits fins, cohérents avec la légèreté de la marque.
+
+## Distinction marketplace (vendeur vs client vs admin)
+
+Même système visuel pour les trois espaces — pas de rupture de charte selon le rôle. Ce qui change :
+- **Espace client** : centré produit/découverte, CTA = "Ajouter au panier" / "Commander"
+- **Espace vendeur** : centré données/gestion, plus de tableaux et de chiffres, mais toujours dans la même palette (pas de bascule vers un style "dashboard SaaS" générique bleu/gris)
+- **Espace admin** : identique à vendeur dans l'esprit, avec un badge ou libellé discret signalant le contexte admin
+
+## Fichiers associés
+
+- `src/theme.css` — implémentation Tailwind v4 (`@theme`) des tokens ci-dessus, `@font-face` pour les trois polices, support du mode sombre via classe `.dark`

@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Créer un compte — StepUp Admin</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        backgroundColor: "var(--color-background)",
+                        surfaceColor: "var(--color-surface)",
+                        textColor: "var(--color-text)",
+                        accent: "var(--color-accent)",
+                        muted: "var(--color-muted)",
+                    },
+                    fontFamily: {
+                        display: ["Qurova", "serif"],
+                        headline: ["Metal", "sans-serif"],
+                        body: ["Albert Sans", "sans-serif"],
+                    },
+                },
+            },
+        };
+    </script>
+    <link rel="stylesheet" href="/admin/css/style.css" />
+    <script src="/admin/js/theme.js"></script>
+</head>
+<body class="font-body bg-backgroundColor text-textColor min-h-screen flex items-center justify-center px-4">
+
+    <button
+        onclick="toggleTheme()"
+        aria-label="Changer de thème"
+        class="fixed top-6 right-6 w-10 h-10 rounded-full bg-surfaceColor flex items-center justify-center hover:opacity-80 transition-opacity"
+    >
+        🌓
+    </button>
+
+    <div class="w-full max-w-sm">
+        <div class="text-center mb-8">
+            <h1 class="font-headline text-2xl">
+                StepUp<span class="text-accent">.admin</span>
+            </h1>
+            <p class="text-muted text-sm mt-2">Création de compte administrateur</p>
+            <p class="text-xs text-muted mt-1">(Limité à 2 comptes — usage strictement personnel)</p>
+        </div>
+
+        <form id="registerForm" class="bg-surfaceColor rounded-lg shadow-lg p-8 space-y-5">
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label for="nom" class="block text-sm font-medium mb-2">Nom</label>
+                    <input
+                        type="text" id="nom" name="nom" required
+                        class="w-full px-4 py-3 rounded-md bg-backgroundColor border border-muted/30 focus:ring-2 focus:ring-accent focus:border-transparent outline-none text-sm"
+                    />
+                </div>
+                <div>
+                    <label for="prenom" class="block text-sm font-medium mb-2">Prénom</label>
+                    <input
+                        type="text" id="prenom" name="prenom" required
+                        class="w-full px-4 py-3 rounded-md bg-backgroundColor border border-muted/30 focus:ring-2 focus:ring-accent focus:border-transparent outline-none text-sm"
+                    />
+                </div>
+            </div>
+
+            <div>
+                <label for="email" class="block text-sm font-medium mb-2">Email</label>
+                <input
+                    type="email" id="email" name="email" required
+                    class="w-full px-4 py-3 rounded-md bg-backgroundColor border border-muted/30 focus:ring-2 focus:ring-accent focus:border-transparent outline-none text-sm"
+                    placeholder="admin@stepup.shop"
+                />
+            </div>
+
+            <div>
+                <label for="password" class="block text-sm font-medium mb-2">Mot de passe</label>
+                <input
+                    type="password" id="password" name="password" required minlength="8"
+                    class="w-full px-4 py-3 rounded-md bg-backgroundColor border border-muted/30 focus:ring-2 focus:ring-accent focus:border-transparent outline-none text-sm"
+                    placeholder="8 caractères minimum"
+                />
+            </div>
+
+            <button
+                type="submit"
+                id="submitBtn"
+                class="w-full bg-accent text-backgroundColor font-medium py-3 rounded-md hover:opacity-90 transition-opacity disabled:opacity-50"
+            >
+                Créer le compte
+            </button>
+
+            <p id="errorMsg" class="text-sm text-red-500 text-center hidden"></p>
+            <p id="successMsg" class="text-sm text-accent text-center hidden"></p>
+        </form>
+
+        <p class="text-center text-sm text-muted mt-6">
+            Déjà un compte ?
+            <a href="/admin/index.html" class="text-accent hover:underline">Se connecter</a>
+        </p>
+    </div>
+
+    <script>
+        document.getElementById("registerForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const errorMsg = document.getElementById("errorMsg");
+            const successMsg = document.getElementById("successMsg");
+            const submitBtn = document.getElementById("submitBtn");
+            errorMsg.classList.add("hidden");
+            successMsg.classList.add("hidden");
+            submitBtn.disabled = true;
+            submitBtn.textContent = "Création en cours...";
+
+            const payload = {
+                nom: document.getElementById("nom").value,
+                prenom: document.getElementById("prenom").value,
+                email: document.getElementById("email").value,
+                password: document.getElementById("password").value,
+            };
+
+            try {
+                const response = await fetch("http://localhost:3000/api/admin/auth/register", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload),
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.message || "Échec de la création du compte.");
+                }
+
+                successMsg.textContent = "Compte créé avec succès. Redirection...";
+                successMsg.classList.remove("hidden");
+                setTimeout(() => (window.location.href = "/admin/index.html"), 1500);
+            } catch (err) {
+                errorMsg.textContent = err.message;
+                errorMsg.classList.remove("hidden");
+                submitBtn.disabled = false;
+                submitBtn.textContent = "Créer le compte";
+            }
+        });
+    </script>
+</body>
+</html>

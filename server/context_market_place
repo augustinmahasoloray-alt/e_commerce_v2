@@ -1,0 +1,48 @@
+# Contexte projet — StepUp (transformation e-commerce → marketplace)
+
+## Le projet
+
+StepUp est une plateforme e-commerce de chaussures, développée comme projet de fin d'études (capstone) couvrant SGBDR, administration système, réseau et développement web/app sécurisé. Le projet est actuellement en cours de transformation d'un modèle **e-commerce mono-vendeur** vers un modèle **marketplace multi-vendeurs**.
+
+## Stack technique
+
+- **Backend** : Node.js + Express, architecture en couches `routes/ → controllers/ → services/` (les services contiennent toute la logique Prisma, les contrôleurs gèrent req/res et appellent `next(error)` en cas d'erreur)
+- **ORM** : Prisma 7.x avec `@prisma/adapter-pg` (PostgreSQL)
+- **Frontend** : React + Vite + Tailwind (client/), développement démarré : axios instance, AuthContext, page Login, routing dans App.jsx
+- **Upload images** : Cloudinary (cloud name `siljcdbb`)
+- **Environnement** : VM VirtualBox Ubuntu simulant un VPS (NAT port-forwarding), accès via VS Code Remote-SSH (alias `stepup-vm`)
+- **Monorepo** : `client/` (React) + `server/` (Express)
+
+## Conventions du projet (important pour rester cohérent)
+
+- Champs de base de données en français, snake_case (`nom`, `prix`, `date_creation`, `vendor_id`...)
+- Réponses API : `{ succes: true/false, ... }` (orthographe française, sans double "s")
+- Fichiers middlewares dans `middlewares/` (pluriel), suffixe `.middleware.js` (ex: `auth.middleware.js`, `role.middleware.js`)
+- `roleMiddleware(["admin"])` — prend un tableau de rôles autorisés en argument
+- Toujours passer par la couche `services/` pour les requêtes Prisma, jamais directement dans les contrôleurs
+- Style de code : pas de code partiel/incomplet — fichiers entiers et prêts à l'emploi
+
+## Architecture marketplace mise en place
+
+### Modèle de données (Prisma) — déjà appliqué en base (migration réussie)
+- `User` : ajout du rôle `vendeur` (enum `Role`: client / vendeur / admin)
+- `Vendor` : profil boutique (1-1 avec `User`), `statut` (en_attente / valide / suspendu / rejete), `taux_commission`
+- `Product.vendor_id` : chaque produit appartient à un vendeur
+- **Split des commandes** : `Order` (niveau client, 1 paiement/1 adresse) → `VendorOrder` (une par vendeur présent dans le panier, porte le statut de livraison réel) → `OrderItem` (rattaché à `VendorOrder`, plus à `Order` directement)
+- `VendorTransaction` : ledger simple (credit_vente / debit_commission / versement) servant à calculer le solde d'un vendeur, car MVola/Orange Money ne supportent pas le split-payment natif — la plateforme encaisse en un bloc puis crédite les vendeurs en interne
+
+### Backend déjà livré et fonctionnel
+- `middlewares/vendor.middleware.js` : `attachVendor` (charge le profil vendeur, laisse passer les admins) + `requireOwnership` (vérifie qu'une ressource appartient au vendeur connecté, bypass pour les admins)
+- `services/vendor.service.js` + `controllers/vendor.controller.js` + `routes/vendor.routes.js` : candidature vendeur, profil, solde, **dashboard** (CA, nb commandes, répartition par statut, 5 dernières commandes), gestion des commandes vendeur, validation/rejet/suspension par un admin
+- `services/product.service.js` + `controllers/product.controller.js` + `routes/product.routes.js` : produits scopés par vendeur, injection automatique de `vendor_id`, protection ownership sur update/delete/images
+- `controllers/order.controller.js` : `createOrder` fait le split automatique du panier en plusieurs `VendorOrder` dans une transaction atomique (vérifie stock + statut boutique, calcule commission par vendeur, crée les `VendorTransaction`)
+
+## Ce qu'il reste à faire
+
+1. **Nettoyage** : retirer `updateVendorOrderStatus`/`getVendorOrders` de `order.controller.js` (dupliqués, la version propre est dans `vendor.service.js`)
+2. **Frontend** : espace vendeur (dashboard, produits, commandes), page boutique publique par vendeur, adaptation du panier/checkout à l'affichage multi-vendeurs
+3. **Optionnel** : passe de cohérence sur les tout premiers fichiers RBAC livrés avant qu'on connaisse les vraies conventions du projet (`success`→`succes`, noms de fichiers)
+
+## Autres projets en parallèle (contexte, pas prioritaire ici)
+
+L'utilisateur développe aussi **Kanto** (site culturel sur les traditions Antakarana malgaches, React 19 + Vite 8 + Tailwind v4) en parallèle de StepUp, mais ce n'est pas lié à cette transformation marketplace.

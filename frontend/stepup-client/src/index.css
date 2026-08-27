@@ -1,0 +1,118 @@
+@import url("https://fonts.bunny.net/css?family=albert-sans:100,200,200i,300,300i,400,400i,500,500i,600,600i,700,700i,800,800i,900,900i|metal:400");
+@import "tailwindcss";
+
+/* ============ QUROVA — fichiers locaux dans public/fonts/qurova/ ============ */
+/* Noms de fichiers repris exactement de ton dossier public/fonts/qurova/ */
+
+@font-face {
+  font-family: "Qurova";
+  src: url("/fonts/qurova/QurovaDEMO-Light-BF67a5c6380ebd4.otf") format("opentype");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Qurova";
+  src: url("/fonts/qurova/QurovaDEMO-Regular-BF67a5c637a5dc9.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Qurova";
+  src: url("/fonts/qurova/QurovaDEMO-Medium-BF67a5c6382651c.otf") format("opentype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Qurova";
+  src: url("/fonts/qurova/QurovaDEMO-SemiBold-BF67a5c637bcd0b.otf") format("opentype");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Qurova";
+  src: url("/fonts/qurova/QurovaDEMO-Bold-BF67a5c637eed62.otf") format("opentype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ============ COULEURS — LIGHT (par défaut) ============ */
+
+:root {
+  --color-background: #FAFAF9;
+  --color-surface: #FFFFFF;
+  --color-text: #111827;
+  --color-accent: #e09f3e;
+  --color-muted: #03045e;
+}
+
+/* ============ COULEURS — DARK ============ */
+/* Basculé via classe .dark sur <html>, cohérent avec le ThemeProvider
+   déjà utilisé sur Kanto (persisté en localStorage). */
+
+.dark {
+  --color-background: #0B0B0B;
+  --color-surface: #161616;
+  --color-text: #F5F5F5;
+  --color-accent: #e09f3e;
+  --color-muted: #A0AEC0;
+}
+
+/* ============ TOKENS TAILWIND V4 ============ */
+/* Génère automatiquement bg-backgroundColor, text-textColor,
+   text-accent, font-display, font-headline, font-body, etc. */
+
+@theme {
+  --color-backgroundColor: var(--color-background);
+  --color-surfaceColor: var(--color-surface);
+  --color-textColor: var(--color-text);
+  --color-accent: var(--color-accent);
+  --color-muted: var(--color-muted);
+
+  --font-display: "Qurova", serif;
+  --font-headline: "Metal", sans-serif;
+  --font-body: "Albert Sans", sans-serif;
+}
+
+/* ============ TRANSITION DOUCE ENTRE THÈMES ============ */
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  transition: background-color 300ms ease, color 300ms ease;
+}
+
+/* ============ MARQUEE INFINI — FeaturedCollections ============ */
+
+@keyframes marquee-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+.marquee-track {
+  animation: marquee-scroll 40s linear infinite;
+  padding-left: 1rem;
+}
+
+@media (min-width: 640px) {
+  .marquee-track { padding-left: 1.5rem; }
+}
+
+.marquee-track:hover {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track {
+    animation: none;
+  }
+}

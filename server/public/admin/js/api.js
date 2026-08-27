@@ -2,7 +2,7 @@
 // Ajoute automatiquement le token JWT stocké en localStorage
 // et redirige vers /admin/index.html si la session est invalide/expirée.
 
-const API_BASE = "http://localhost:3000";
+const API_BASE = window.location.origin;
 
 async function apiFetch(path, options = {}) {
     const token = localStorage.getItem("admin_token");
